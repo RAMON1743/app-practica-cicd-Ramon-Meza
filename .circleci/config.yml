@@ -45,14 +45,13 @@ jobs:
       - run:
           name: Verificar variables de entorno para Docker
           command: |
-            if [ -z "$DOCKERHUB_USER" ] || [ -z "$IMAGE_NAME" ] || [ -z "$CIRCLE_SHA1" ] || [ -z "$DOCKERHUB_PASS" ]; then
-              echo "Error: Una o más variables están vacías. DOCKERHUB_USER=$DOCKERHUB_USER IMAGE_NAME=$IMAGE_NAME CIRCLE_SHA1=$CIRCLE_SHA1 DOCKERHUB_PASS=$DOCKERHUB_PASS"
+            if [ -z "$DOCKERHUB_USER" ] || [ -z "$IMAGE_NAME" ] || [ -z "$CIRCLE_SHA1" ]; then
+              echo "Error: Una o más variables están vacías. DOCKERHUB_USER=$DOCKERHUB_USER IMAGE_NAME=$IMAGE_NAME CIRCLE_SHA1=$CIRCLE_SHA1"
               exit 1
             fi
             echo "DOCKERHUB_USER: $DOCKERHUB_USER"
             echo "IMAGE_NAME: $IMAGE_NAME"
             echo "CIRCLE_SHA1: $CIRCLE_SHA1"
-            echo "DOCKERHUB_PASS: ***"  # No muestres la contraseña por seguridad
       - run:
           name: Login a Docker Hub
           command: |
@@ -75,7 +74,7 @@ jobs:
       - run:
           name: Clonar repositorio de manifiestos
           command: |
-            git clone https://github.com/tuusuario/tu-repo-de-manifiestos.git manifests  # Clonar repo de manifiestos
+            git clone git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git manifests  # Clonar el repo con la clave SSH
       - run:
           name: Actualizar imagen en manifiestos
           command: |
@@ -87,7 +86,7 @@ jobs:
             cd manifests
             git add .  # Agregar cambios
             git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"  # Commit con mensaje
-            git push https://github.com/tuusuario/tu-repo-de-manifiestos.git main  # Push de cambios
+            git push git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git main  # Push de cambios
 
 # Definición del workflow
 workflows:
@@ -107,4 +106,4 @@ workflows:
           filters:
             branches:
               only:
-                - main  # Solo para la rama main
+                
