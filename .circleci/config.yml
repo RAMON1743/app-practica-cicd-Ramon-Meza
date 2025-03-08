@@ -1,0 +1,92 @@
+version: 2.1
+
+jobs:
+  build-and-test:
+    docker:
+      - image: cimg/python:3.9
+      - image: redis:alpine
+        name: redis-final
+
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Instalar dependencias
+          command: |
+            python -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+            pip install pytest redis pytest-cov black ggshield
+      - run:
+          name: Ejecutar pruebas
+          environment:
+            REDIS_HOST: redis-final
+            REDIS_PORT: 6379
+          command: |
+            . venv/bin/activate
+            pytest tests/ --cov=. --cov-report=html:test-results/coverage-html
+      - store_test_results:
+          path: test-results
+      - store_artifacts:
+          path: test-results
+          destination: test-reports
+
+  deploy:
+    docker:
+      - image: cimg/base:2024.02
+    steps:
+      - checkout
+      - run:
+          name: Construir imagen Docker
+          command: |
+            docker build -t $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1 .
+      - run:
+          name: Login a Docker Hub
+          command: |
+            echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
+      - run:
+          name: Push imagen a Docker Hub
+          command: |
+            docker push $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1
+
+  update-k8s-manifests:
+    docker:
+      - image: cimg/python:3.9
+    steps:
+      - checkout
+      - run:
+          name: Clonar repositorio de manifiestos
+          command: |
+            git clone https://github.com/tuusuario/tu-repo-de-manifiestos.git manifests
+      - run:
+          name: Actualizar imagen en manifiestos
+          command: |
+            cd manifests
+            sed -i "s|image: .*|image: $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1|g" deployment.yaml
+      - run:
+          name: Commit y Push de cambios
+          command: |
+            cd manifests
+            git add .
+            git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"
+            git push https://github.com/tuusuario/tu-repo-de-manifiestos.git main
+
+workflows:
+  
+  build-test-deploy:
+    jobs:
+      - build-and-test
+      - deploy:
+          requires:
+            - build-and-test
+          filters:
+            branches:
+              only:
+                - main
+      - update-k8s-manifests:
+          requires:
+            - deploy
+          filters:
+            branches:
+              only:
+                - main
