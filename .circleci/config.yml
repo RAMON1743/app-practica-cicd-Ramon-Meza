@@ -78,13 +78,14 @@ jobs:
               rm -rf manifests
             fi
             # Clonar el repositorio
-            git clone git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git manifests
+            git clone https://github.com/RAMON1743/app-practica-cicd-Ramon-Meza.git manifests
       - run:
           name: Verificar contenido del directorio de manifiestos
           command: |
+            # Verificar el contenido del directorio después de clonar
             ls -l manifests
             # Verificar que deployment.yaml existe en el directorio correcto
-            ls -l manifests/deployment.yaml
+            ls -l manifests/deployment.yaml || echo "No se encontró el archivo deployment.yaml"
       - run:
           name: Actualizar imagen en manifiestos con envsubst
           command: |
