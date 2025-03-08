@@ -80,20 +80,22 @@ jobs:
             # Clonar el repositorio
             git clone git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git manifests
       - run:
-          name: Crear un nuevo archivo con la imagen actualizada
+          name: Actualizar imagen en manifiestos con envsubst
           command: |
             cd manifests
-            # Crear un nuevo archivo de manifiesto actualizando la imagen
-            sed "s|image: .*|image: $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1|g" deployment.yaml > new-deployment.yaml
-            # Verificar que el nuevo archivo haya sido creado correctamente
-            cat new-deployment.yaml
+            # Usar envsubst para reemplazar las variables en el archivo deployment.yaml
+            envsubst < deployment.yaml > deployment_updated.yaml
+            # Verificar que la imagen haya sido actualizada
+            cat deployment_updated.yaml
+            # Sobrescribir el archivo original con el actualizado
+            mv deployment_updated.yaml deployment.yaml
       - run:
           name: Commit y Push de cambios
           command: |
             cd manifests
-            git add new-deployment.yaml
-            git commit -m "Crear nuevo manifiesto con imagen actualizada a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"
-            git push origin main  # Usando 'origin' como el remoto por defecto en lugar de URL completa
+            git add .
+            git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"
+            git push https://github.com/RAMON1743/app-practica-cicd-Ramon-Meza.git main
 
 # Definición del workflow
 workflows:
