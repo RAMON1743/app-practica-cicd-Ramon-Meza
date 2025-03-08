@@ -1,11 +1,8 @@
 version: 2.1
 
-# Definición de los trabajos (jobs)
 jobs:
-  # Trabajo de Build y Pruebas
   build-and-test:
     docker:
-      # Imagen de Python y Redis
       - image: cimg/python:3.9
       - image: redis:alpine
         name: redis-final
@@ -34,7 +31,6 @@ jobs:
           path: test-results  # Almacenar los informes de pruebas
           destination: test-reports
 
-  # Trabajo de despliegue (deploy)
   deploy:
     docker:
       - image: cimg/base:2024.02  # Usar una imagen base para construir la imagen Docker
@@ -42,6 +38,11 @@ jobs:
       - checkout  # Clonar el repositorio
       - setup_remote_docker:
           docker_layer_caching: true  # Caching de capas Docker para optimizar tiempos
+      - run:
+          name: Obtener el SHA1 del commit
+          command: |
+            export CIRCLE_SHA1=$(git rev-parse --short HEAD)  # Obtener el hash del commit
+            echo "CIRCLE_SHA1=$CIRCLE_SHA1"
       - run:
           name: Verificar variables de entorno para Docker
           command: |
@@ -59,32 +60,21 @@ jobs:
       - run:
           name: Login a Docker Hub
           command: |
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin  # Login en Docker Hub
+            echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin  # Login en Docker Hub
       - run:
           name: Push imagen a Docker Hub
           command: |
             docker push "$DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"  # Subir imagen a Docker Hub
 
-  # Trabajo de actualización de manifiestos de Kubernetes
   update-k8s-manifests:
     docker:
       - image: cimg/python:3.9  # Usar imagen de Python para trabajar con los manifiestos
     steps:
       - checkout  # Clonar el repositorio
       - run:
-          name: Eliminar el directorio 'manifests' si existe
-          command: |
-            if [ -d "manifests" ]; then
-              rm -rf manifests  # Eliminar directorio 'manifests' si ya existe
-            fi
-      - run:
           name: Clonar repositorio de manifiestos
           command: |
-            git clone git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git manifests  # Clonar el repo con la clave SSH
-      - run:
-          name: Verificar archivos en el directorio 'manifests'
-          command: |
-            ls -la manifests  # Listar todos los archivos y directorios dentro de 'manifests'
+            git clone git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git manifests  # Clonar repo de manifiestos
       - run:
           name: Actualizar imagen en manifiestos
           command: |
@@ -96,7 +86,7 @@ jobs:
             cd manifests
             git add .  # Agregar cambios
             git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"  # Commit con mensaje
-            git push git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git main  # Push de cambios
+            git push https://github.com/tuusuario/tu-repo-de-manifiestos.git main  # Push de cambios
 
 # Definición del workflow
 workflows:
