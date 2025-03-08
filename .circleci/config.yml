@@ -1,11 +1,8 @@
 version: 2.1
 
-# Definición de los trabajos (jobs)
 jobs:
-  # Trabajo de Build y Pruebas
   build-and-test:
     docker:
-      # Imagen de Python y Redis
       - image: cimg/python:3.9
       - image: redis:alpine
         name: redis-final
@@ -14,11 +11,13 @@ jobs:
       - setup_remote_docker:
           docker_layer_caching: true  # Caching de capas Docker para optimizar tiempos
       - run:
-          name: Verificar MY_ENV_VAR
+          name: Verificar variables de entorno
           command: |
-            echo "MY_ENV_VAR: $MY_ENV_VAR"
-            if [ -z "$MY_ENV_VAR" ]; then
-              echo "Error: MY_ENV_VAR no está definida"
+            echo "DOCKERHUB_USER: $DOCKERHUB_USER"
+            echo "IMAGE_NAME: $IMAGE_NAME"
+            echo "CIRCLE_SHA1: $CIRCLE_SHA1"
+            if [ -z "$DOCKERHUB_USER" ] || [ -z "$IMAGE_NAME" ] || [ -z "$CIRCLE_SHA1" ]; then
+              echo "Error: Una o más variables están vacías"
               exit 1
             fi
       - run:
@@ -42,7 +41,6 @@ jobs:
           path: test-results  # Almacenar los informes de pruebas
           destination: test-reports
 
-  # Trabajo de despliegue (deploy)
   deploy:
     docker:
       - image: cimg/base:2024.02  # Usar una imagen base para construir la imagen Docker
@@ -53,13 +51,13 @@ jobs:
       - run:
           name: Verificar variables de entorno para Docker
           command: |
-            echo "DOCKERHUB_USER: $DOCKERHUB_USER"
-            echo "IMAGE_NAME: $IMAGE_NAME"
-            echo "CIRCLE_SHA1: $CIRCLE_SHA1"
             if [ -z "$DOCKERHUB_USER" ] || [ -z "$IMAGE_NAME" ] || [ -z "$CIRCLE_SHA1" ]; then
               echo "Error: Una o más variables están vacías. DOCKERHUB_USER=$DOCKERHUB_USER IMAGE_NAME=$IMAGE_NAME CIRCLE_SHA1=$CIRCLE_SHA1"
               exit 1
             fi
+            echo "DOCKERHUB_USER: $DOCKERHUB_USER"
+            echo "IMAGE_NAME: $IMAGE_NAME"
+            echo "CIRCLE_SHA1: $CIRCLE_SHA1"
       - run:
           name: Construir imagen Docker
           command: |
@@ -73,7 +71,6 @@ jobs:
           command: |
             docker push "$DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"  # Subir imagen a Docker Hub
 
-  # Trabajo de actualización de manifiestos de Kubernetes
   update-k8s-manifests:
     docker:
       - image: cimg/python:3.9  # Usar imagen de Python para trabajar con los manifiestos
@@ -96,7 +93,6 @@ jobs:
             git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"  # Commit con mensaje
             git push https://github.com/tuusuario/tu-repo-de-manifiestos.git main  # Push de cambios
 
-# Definición del workflow
 workflows:
   build-test-deploy:
     jobs:
