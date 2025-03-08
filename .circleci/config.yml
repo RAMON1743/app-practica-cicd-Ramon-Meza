@@ -84,7 +84,7 @@ jobs:
           command: |
             cd manifests
             # Actualizar imagen en deployment.yaml
-            sed -i "s|image: .*|image: $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1|g" deployment.yaml
+            sed -i "s|image: .*|image: $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1|g" manifests/deployment.yaml
             # Verificar que la imagen haya sido actualizada
             cat deployment.yaml
       - run:
