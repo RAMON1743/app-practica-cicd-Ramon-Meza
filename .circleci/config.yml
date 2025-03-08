@@ -10,7 +10,7 @@ jobs:
       - image: redis:alpine
         name: redis-final
     steps:
-      - checkout  # Clonar el repositorio
+      - checkout # Clonar el repositorio
       - setup_remote_docker:
           docker_layer_caching: true # Caching de capas Docker para optimizar tiempos
       - run:
@@ -40,12 +40,16 @@ jobs:
       - image: cimg/base:2024.02  # Usar una imagen base para construir la imagen Docker
     steps:
       - checkout  # Clonar el repositorio
-      - setup_remote_docker:
-          docker_layer_caching: true  # Usar el caché de capas Docker
+      - run:
+          name: Verificar variables de entorno para Docker
+          command: |
+            echo "DOCKERHUB_USER: $DOCKERHUB_USER"
+            echo "IMAGE_NAME: $IMAGE_NAME"
+            echo "CIRCLE_SHA1: $CIRCLE_SHA1"
       - run:
           name: Construir imagen Docker
           command: |
-            docker build -t $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1 .  # Construir imagen Docker con tag basado en SHA
+            docker build -t "$DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1" .  # Construir imagen Docker con tag basado en SHA
       - run:
           name: Login a Docker Hub
           command: |
@@ -53,7 +57,7 @@ jobs:
       - run:
           name: Push imagen a Docker Hub
           command: |
-            docker push $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1  # Subir imagen a Docker Hub
+            docker push "$DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"  # Subir imagen a Docker Hub
 
   # Trabajo de actualización de manifiestos de Kubernetes
   update-k8s-manifests:
