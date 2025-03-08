@@ -82,6 +82,10 @@ jobs:
           command: |
             git clone git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git manifests  # Clonar el repo con la clave SSH
       - run:
+          name: Verificar archivos en manifests
+          command: |
+            ls -la manifests  # Listar archivos en el directorio 'manifests' para asegurarte de que deployment.yaml existe
+      - run:
           name: Actualizar imagen en manifiestos
           command: |
             cd manifests
