@@ -10,9 +10,9 @@ jobs:
       - image: redis:alpine
         name: redis-final
     steps:
-      - checkout # Clonar el repositorio
+      - checkout  # Clonar el repositorio
       - setup_remote_docker:
-          docker_layer_caching: true # Caching de capas Docker para optimizar tiempos
+          docker_layer_caching: true  # Caching de capas Docker para optimizar tiempos
       - run:
           name: Instalar dependencias
           command: |
@@ -45,7 +45,6 @@ jobs:
       - run:
           name: Verificar variables de entorno para Docker
           command: |
-            # Verificamos que las variables de entorno estén correctamente definidas
             if [ -z "$DOCKERHUB_USER" ] || [ -z "$IMAGE_NAME" ] || [ -z "$CIRCLE_SHA1" ]; then
               echo "Error: Una o más variables están vacías. DOCKERHUB_USER=$DOCKERHUB_USER IMAGE_NAME=$IMAGE_NAME CIRCLE_SHA1=$CIRCLE_SHA1"
               exit 1
