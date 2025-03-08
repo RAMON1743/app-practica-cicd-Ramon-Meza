@@ -1,92 +1,98 @@
 version: 2.1
 
+# Definición de los trabajos (jobs)
 jobs:
+  # Trabajo de Build y Pruebas
   build-and-test:
     docker:
+      # Imagen de Python y Redis
       - image: cimg/python:3.9
       - image: redis:alpine
         name: redis-final
-
     steps:
-      - checkout
-      - setup_remote_docker
+      - checkout # Clonar el repositorio
+      - setup_remote_docker:
+          version: "20.10.7"  # Especificar la versión de Docker para los jobs que lo requieren.
+          docker_layer_caching: true # Caching de capas Docker para optimizar tiempos
       - run:
           name: Instalar dependencias
           command: |
-            python -m venv venv
-            . venv/bin/activate
-            pip install -r requirements.txt
-            pip install pytest redis pytest-cov black ggshield
+            python3 -m venv venv  # Crear entorno virtual
+            . venv/bin/activate  # Activar entorno virtual
+            pip install -r requirements.txt  # Instalar dependencias desde requirements.txt
+            pip install pytest redis pytest-cov black ggshield  # Instalar dependencias adicionales
       - run:
           name: Ejecutar pruebas
           environment:
-            REDIS_HOST: redis-final
-            REDIS_PORT: 6379
+            REDIS_HOST: redis-final  # Usar nombre del contenedor redis como host
+            REDIS_PORT: 6379  # Puerto de Redis
           command: |
-            . venv/bin/activate
-            pytest tests/ --cov=. --cov-report=html:test-results/coverage-html
+            . venv/bin/activate  # Activar entorno virtual
+            pytest tests/ --cov=. --cov-report=html:test-results/coverage-html  # Ejecutar pruebas
       - store_test_results:
-          path: test-results
+          path: test-results  # Guardar los resultados de las pruebas
       - store_artifacts:
-          path: test-results
+          path: test-results  # Almacenar los informes de pruebas
           destination: test-reports
 
+  # Trabajo de despliegue (deploy)
   deploy:
     docker:
-      - image: cimg/base:2024.02
+      - image: cimg/base:2024.02  # Usar una imagen base para construir la imagen Docker
     steps:
-      - checkout
+      - checkout  # Clonar el repositorio
       - run:
           name: Construir imagen Docker
           command: |
-            docker build -t $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1 .
+            docker build -t $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1 .  # Construir imagen Docker con tag basado en SHA
       - run:
           name: Login a Docker Hub
           command: |
-            echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
+            echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin  # Login en Docker Hub
       - run:
           name: Push imagen a Docker Hub
           command: |
-            docker push $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1
+            docker push $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1  # Subir imagen a Docker Hub
 
+  # Trabajo de actualización de manifiestos de Kubernetes
   update-k8s-manifests:
     docker:
-      - image: cimg/python:3.9
+      - image: cimg/python:3.9  # Usar imagen de Python para trabajar con los manifiestos
     steps:
-      - checkout
+      - checkout  # Clonar el repositorio
       - run:
           name: Clonar repositorio de manifiestos
           command: |
-            git clone https://github.com/tuusuario/tu-repo-de-manifiestos.git manifests
+            git clone https://github.com/tuusuario/tu-repo-de-manifiestos.git manifests  # Clonar repo de manifiestos
       - run:
           name: Actualizar imagen en manifiestos
           command: |
             cd manifests
-            sed -i "s|image: .*|image: $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1|g" deployment.yaml
+            sed -i "s|image: .*|image: $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1|g" deployment.yaml  # Actualizar imagen en deployment.yaml
       - run:
           name: Commit y Push de cambios
           command: |
             cd manifests
-            git add .
-            git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"
-            git push https://github.com/tuusuario/tu-repo-de-manifiestos.git main
+            git add .  # Agregar cambios
+            git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"  # Commit con mensaje
+            git push https://github.com/tuusuario/tu-repo-de-manifiestos.git main  # Push de cambios
 
+# Definición del workflow
 workflows:
-  
   build-test-deploy:
     jobs:
-      - build-and-test
+      - build-and-test  # Ejecutar build y pruebas primero
       - deploy:
           requires:
-            - build-and-test
+            - build-and-test  # El deploy solo se ejecuta si las pruebas son exitosas
           filters:
             branches:
               only:
-                - main
+                - main  # Solo para la rama main
       - update-k8s-manifests:
           requires:
-            - deploy
+            - deploy  # Actualizar los manifiestos después del deploy
           filters:
             branches:
               only:
-                - main
+                - main  # Solo para la rama main
