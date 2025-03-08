@@ -40,6 +40,9 @@ jobs:
       - image: cimg/base:2024.02  # Usar una imagen base para construir la imagen Docker
     steps:
       - checkout  # Clonar el repositorio
+      - setup_remote_docker:
+          version: "20.10.7"  # Especificar la versión de Docker si es necesario
+          docker_layer_caching: true  # Caching de capas Docker para optimizar tiempos
       - run:
           name: Verificar variables de entorno para Docker
           command: |
