@@ -80,15 +80,22 @@ jobs:
             # Clonar el repositorio
             git clone git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git manifests
       - run:
+          name: Verificar contenido del directorio de manifiestos
+          command: |
+            ls -l manifests
+            # Verificar que deployment.yaml existe en el directorio correcto
+            ls -l manifests/deployment.yaml
+      - run:
           name: Actualizar imagen en manifiestos con envsubst
           command: |
-            cd manifests
+            # Verificar el contenido del archivo antes de usar envsubst
+            cat manifests/deployment.yaml
             # Usar envsubst para reemplazar las variables en el archivo deployment.yaml
-            envsubst < deployment.yaml > deployment_updated.yaml
+            envsubst < manifests/deployment.yaml > manifests/deployment_updated.yaml
             # Verificar que la imagen haya sido actualizada
-            cat deployment_updated.yaml
+            cat manifests/deployment_updated.yaml
             # Sobrescribir el archivo original con el actualizado
-            mv deployment_updated.yaml deployment.yaml
+            mv manifests/deployment_updated.yaml manifests/deployment.yaml
       - run:
           name: Commit y Push de cambios
           command: |
