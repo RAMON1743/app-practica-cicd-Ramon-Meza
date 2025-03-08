@@ -53,13 +53,13 @@ jobs:
             echo "IMAGE_NAME: $IMAGE_NAME"
             echo "CIRCLE_SHA1: $CIRCLE_SHA1"
       - run:
-          name: Login a Docker Hub
-          command: |
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin  # Login en Docker Hub
-      - run:
           name: Construir imagen Docker
           command: |
             docker build -t "$DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1" .  # Construir imagen Docker con tag basado en SHA
+      - run:
+          name: Login a Docker Hub
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin  # Login en Docker Hub
       - run:
           name: Push imagen a Docker Hub
           command: |
@@ -71,6 +71,12 @@ jobs:
       - image: cimg/python:3.9  # Usar imagen de Python para trabajar con los manifiestos
     steps:
       - checkout  # Clonar el repositorio
+      - run:
+          name: Eliminar el directorio 'manifests' si existe
+          command: |
+            if [ -d "manifests" ]; then
+              rm -rf manifests  # Eliminar directorio 'manifests' si ya existe
+            fi
       - run:
           name: Clonar repositorio de manifiestos
           command: |
@@ -106,4 +112,4 @@ workflows:
           filters:
             branches:
               only:
-                
+                - main  # Solo para la rama main
