@@ -45,8 +45,9 @@ jobs:
       - run:
           name: Verificar variables de entorno para Docker
           command: |
+            # Verificamos que las variables de entorno estén correctamente definidas
             if [ -z "$DOCKERHUB_USER" ] || [ -z "$IMAGE_NAME" ] || [ -z "$CIRCLE_SHA1" ]; then
-              echo "Error: Una o más variables están vacías. DOCKERHUB_USER=$DOCKERHUB_USER IMAGE_NAME=$IMAGE_NAME CIRCLE_SHA1=$CIRCLE_SHA1" 
+              echo "Error: Una o más variables están vacías. DOCKERHUB_USER=$DOCKERHUB_USER IMAGE_NAME=$IMAGE_NAME CIRCLE_SHA1=$CIRCLE_SHA1"
               exit 1
             fi
             echo "DOCKERHUB_USER: $DOCKERHUB_USER"
