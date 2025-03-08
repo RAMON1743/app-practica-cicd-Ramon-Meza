@@ -1,48 +1,46 @@
 version: 2.1
 
+# Definición de los trabajos (jobs)
 jobs:
+  # Trabajo de Build y Pruebas
   build-and-test:
     docker:
       - image: cimg/python:3.9
       - image: redis:alpine
         name: redis-final
     steps:
-      - checkout  # Clonar el repositorio
+      - checkout
       - setup_remote_docker:
-          docker_layer_caching: true  # Caching de capas Docker para optimizar tiempos
+          docker_layer_caching: true
       - run:
           name: Instalar dependencias
           command: |
-            python3 -m venv venv  # Crear entorno virtual
-            . venv/bin/activate  # Activar entorno virtual
-            pip install -r requirements.txt  # Instalar dependencias desde requirements.txt
-            pip install pytest redis pytest-cov black ggshield  # Instalar dependencias adicionales
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements.txt
+            pip install pytest redis pytest-cov black ggshield
       - run:
           name: Ejecutar pruebas
           environment:
-            REDIS_HOST: redis-final  # Usar nombre del contenedor redis como host
-            REDIS_PORT: 6379  # Puerto de Redis
+            REDIS_HOST: redis-final
+            REDIS_PORT: 6379
           command: |
-            . venv/bin/activate  # Activar entorno virtual
-            pytest tests/ --cov=. --cov-report=html:test-results/coverage-html  # Ejecutar pruebas
+            . venv/bin/activate
+            pytest tests/ --cov=. --cov-report=html:test-results/coverage-html
       - store_test_results:
-          path: test-results  # Guardar los resultados de las pruebas
+          path: test-results
       - store_artifacts:
-          path: test-results  # Almacenar los informes de pruebas
+          path: test-results
           destination: test-reports
 
+  # Trabajo de despliegue (deploy)
   deploy:
     docker:
-      - image: cimg/base:2024.02  # Usar una imagen base para construir la imagen Docker
+      - image: cimg/base:2024.02
     steps:
-      - checkout  # Clonar el repositorio
+      - checkout
       - setup_remote_docker:
-          docker_layer_caching: true  # Caching de capas Docker para optimizar tiempos
-      - run:
-          name: Obtener el SHA1 del commit
-          command: |
-            export CIRCLE_SHA1=$(git rev-parse --short HEAD)  # Obtener el hash del commit
-            echo "CIRCLE_SHA1=$CIRCLE_SHA1"
+          docker_layer_caching: true
       - run:
           name: Verificar variables de entorno para Docker
           command: |
@@ -56,54 +54,63 @@ jobs:
       - run:
           name: Construir imagen Docker
           command: |
-            docker build -t "$DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1" .  # Construir imagen Docker con tag basado en SHA
+            docker build -t "$DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1" .
       - run:
           name: Login a Docker Hub
           command: |
-            echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin  # Login en Docker Hub
+            echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
       - run:
           name: Push imagen a Docker Hub
           command: |
-            docker push "$DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"  # Subir imagen a Docker Hub
+            docker push "$DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"
 
+  # Trabajo de actualización de manifiestos de Kubernetes
   update-k8s-manifests:
     docker:
-      - image: cimg/python:3.9  # Usar imagen de Python para trabajar con los manifiestos
+      - image: cimg/python:3.9
     steps:
       - checkout  # Clonar el repositorio
       - run:
-          name: Clonar repositorio de manifiestos
+          name: Limpiar y Clonar repositorio de manifiestos
           command: |
-            git clone git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git manifests  # Clonar repo de manifiestos
+            # Eliminar el directorio 'manifests' si ya existe
+            if [ -d "manifests" ]; then
+              rm -rf manifests
+            fi
+            # Clonar el repositorio
+            git clone git@github.com:RAMON1743/app-practica-cicd-Ramon-Meza.git manifests
       - run:
           name: Actualizar imagen en manifiestos
           command: |
             cd manifests
-            sed -i "s|image: .*|image: $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1|g" deployment.yaml  # Actualizar imagen en deployment.yaml
+            # Actualizar imagen en deployment.yaml
+            sed -i "s|image: .*|image: $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1|g" deployment.yaml
+            # Verificar que la imagen haya sido actualizada
+            cat deployment.yaml
       - run:
           name: Commit y Push de cambios
           command: |
             cd manifests
-            git add .  # Agregar cambios
-            git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"  # Commit con mensaje
-            git push https://github.com/tuusuario/tu-repo-de-manifiestos.git main  # Push de cambios
+            git add .
+            git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"
+            git push https://github.com/tuusuario/tu-repo-de-manifiestos.git main
 
 # Definición del workflow
 workflows:
   build-test-deploy:
     jobs:
-      - build-and-test  # Ejecutar build y pruebas primero
+      - build-and-test
       - deploy:
           requires:
-            - build-and-test  # El deploy solo se ejecuta si las pruebas son exitosas
+            - build-and-test
           filters:
             branches:
               only:
-                - main  # Solo para la rama main
+                - main
       - update-k8s-manifests:
           requires:
-            - deploy  # Actualizar los manifiestos después del deploy
+            - deploy
           filters:
             branches:
               only:
-                - main  # Solo para la rama main
+                - main
