@@ -14,6 +14,6 @@ spec:
     spec:
       containers:
       - name: redis-counter-app
-        image: ramon1743/redis-counter-app:5a75333
+        image: ${DOCKERHUB_USER}/${IMAGE_NAME}:${CIRCLE_SHA1}  # La imagen será reemplazada
         ports:
         - containerPort: 5000
