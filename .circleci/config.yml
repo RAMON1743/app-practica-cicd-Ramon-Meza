@@ -80,23 +80,29 @@ jobs:
             # Clonar el repositorio
             git clone https://github.com/RAMON1743/app-practica-cicd-Ramon-Meza.git manifests
       - run:
+          name: Configurar identidad de Git
+          command: |
+            git config --global user.email "ramon.meza83@gmail.com"
+            git config --global user.name "RAMON1743"
+
+      - run:
           name: Verificar si el archivo deployment.yaml existe
           command: |
             # Verificar la ubicación actual
             echo "Directorio actual: $(pwd)"
             
-            # Cambiar al directorio 'manifests/manifests'
-            cd manifests/manifests || { echo "Error: No se pudo acceder al directorio 'manifests/manifests'"; exit 1; }
+            # Cambiar al directorio 'manifests'
+            cd manifests/manifests || { echo "Error: No se pudo acceder al directorio 'manifests'"; exit 1; }
 
-            # Verificar el contenido del directorio 'manifests/manifests'
-            echo "Contenido de manifests/manifests:"
+            # Verificar el contenido del directorio 'manifests'
+            echo "Contenido de manifests:"
             ls -l
 
             # Verificar si el archivo 'deployment.yaml' está presente
             if [ -f "deployment.yaml" ]; then
               echo "Archivo deployment.yaml encontrado."
             else
-              echo "Error: No se encontró el archivo deployment.yaml en 'manifests/manifests'."
+              echo "Error: No se encontró el archivo deployment.yaml en 'manifests'."
               exit 1
             fi
 
