@@ -79,25 +79,24 @@ jobs:
             fi
             # Clonar el repositorio
             git clone https://github.com/RAMON1743/app-practica-cicd-Ramon-Meza.git manifests
-
       - run:
           name: Verificar si el archivo deployment.yaml existe
           command: |
             # Verificar la ubicación actual
             echo "Directorio actual: $(pwd)"
+            
+            # Cambiar al directorio 'manifests/manifests'
+            cd manifests/manifests || { echo "Error: No se pudo acceder al directorio 'manifests/manifests'"; exit 1; }
 
-            # Cambiar al directorio 'manifests'
-            cd manifests || { echo "Error: No se pudo acceder al directorio 'manifests'"; exit 1; }
-
-            # Verificar el contenido del directorio 'manifests'
-            echo "Contenido de manifests:"
+            # Verificar el contenido del directorio 'manifests/manifests'
+            echo "Contenido de manifests/manifests:"
             ls -l
 
             # Verificar si el archivo 'deployment.yaml' está presente
             if [ -f "deployment.yaml" ]; then
               echo "Archivo deployment.yaml encontrado."
             else
-              echo "Error: No se encontró el archivo deployment.yaml en 'manifests'."
+              echo "Error: No se encontró el archivo deployment.yaml en 'manifests/manifests'."
               exit 1
             fi
 
@@ -105,7 +104,7 @@ jobs:
           name: Actualizar imagen en manifiestos con envsubst
           command: |
             # Asegurarse de estar en el directorio correcto
-            cd manifests
+            cd manifests/manifests
             # Verificar contenido antes de usar envsubst
             cat deployment.yaml
 
@@ -121,7 +120,7 @@ jobs:
       - run:
           name: Commit y Push de cambios
           command: |
-            cd manifests
+            cd manifests/manifests
             git add .
             git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"
             git push https://github.com/RAMON1743/app-practica-cicd-Ramon-Meza.git main
