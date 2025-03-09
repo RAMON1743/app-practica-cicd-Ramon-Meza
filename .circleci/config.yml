@@ -79,8 +79,9 @@ jobs:
             fi
             # Clonar el repositorio
             git clone https://github.com/RAMON1743/app-practica-cicd-Ramon-Meza.git manifests
+
       - run:
-          name: Verificar y actualizar imagen en manifiestos
+          name: Verificar si el archivo deployment.yaml existe
           command: |
             # Verificar la ubicación actual
             echo "Directorio actual: $(pwd)"
@@ -92,15 +93,20 @@ jobs:
             echo "Contenido de manifests:"
             ls -l
 
-            # Verificar que el archivo 'deployment.yaml' está en el directorio correcto
+            # Verificar si el archivo 'deployment.yaml' está presente
             if [ -f "deployment.yaml" ]; then
               echo "Archivo deployment.yaml encontrado."
             else
-              echo "Error: No se encontró el archivo deployment.yaml"
+              echo "Error: No se encontró el archivo deployment.yaml en 'manifests'."
               exit 1
             fi
 
-            # Verificar el contenido del archivo antes de usar envsubst
+      - run:
+          name: Actualizar imagen en manifiestos con envsubst
+          command: |
+            # Asegurarse de estar en el directorio correcto
+            cd manifests
+            # Verificar contenido antes de usar envsubst
             cat deployment.yaml
 
             # Usar envsubst para reemplazar las variables en el archivo deployment.yaml
@@ -111,6 +117,7 @@ jobs:
 
             # Sobrescribir el archivo original con el actualizado
             mv deployment_updated.yaml deployment.yaml
+
       - run:
           name: Commit y Push de cambios
           command: |
