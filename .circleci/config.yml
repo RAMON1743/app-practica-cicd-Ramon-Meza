@@ -79,6 +79,14 @@ jobs:
             fi
             # Clonar el repositorio
             git clone https://github.com/RAMON1743/app-practica-cicd-Ramon-Meza.git manifests
+
+      - run:
+          name: Verificar estructura del repositorio clonado
+          command: |
+            # Verificar la estructura completa del repositorio clonado
+            echo "Estructura del repositorio clonado:"
+            ls -R
+
       - run:
           name: Verificar contenido del directorio de manifiestos
           command: |
@@ -91,6 +99,7 @@ jobs:
               echo "Error: No se encontró el archivo deployment.yaml"
               exit 1
             fi
+
       - run:
           name: Actualizar imagen en manifiestos con envsubst
           command: |
@@ -102,6 +111,7 @@ jobs:
             cat manifests/deployment_updated.yaml
             # Sobrescribir el archivo original con el actualizado
             mv manifests/deployment_updated.yaml manifests/deployment.yaml
+
       - run:
           name: Commit y Push de cambios
           command: |
