@@ -91,7 +91,7 @@ jobs:
             # Verificar la ubicación actual
             echo "Directorio actual: $(pwd)"
             
-            # Cambiar al directorio 'manifests' (ya no existe el subdirectorio 'manifests')
+            # Cambiar al directorio 'manifests'
             cd manifests || { echo "Error: No se pudo acceder al directorio 'manifests'"; exit 1; }
 
             # Verificar el contenido del directorio 'manifests'
