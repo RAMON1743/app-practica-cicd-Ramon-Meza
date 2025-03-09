@@ -77,28 +77,40 @@ jobs:
             if [ -d "manifests" ]; then
               rm -rf manifests
             fi
-            # Clonar el repositorio usando HTTPS
+            # Clonar el repositorio
             git clone https://github.com/RAMON1743/app-practica-cicd-Ramon-Meza.git manifests
       - run:
-          name: Verificar el contenido del repositorio después de clonarlo
+          name: Verificar y actualizar imagen en manifiestos
           command: |
-            echo "Verificando el contenido del repositorio:"
+            # Verificar la ubicación actual
+            echo "Directorio actual: $(pwd)"
+
+            # Cambiar al directorio 'manifests'
+            cd manifests || { echo "Error: No se pudo acceder al directorio 'manifests'"; exit 1; }
+
+            # Verificar el contenido del directorio 'manifests'
+            echo "Contenido de manifests:"
             ls -l
-            echo "Verificando el contenido del directorio 'manifests':"
-            ls -l manifests
-            echo "Verificando si deployment.yaml está presente:"
-            ls -l manifests/deployment.yaml || echo "No se encontró el archivo deployment.yaml"
-      - run:
-          name: Actualizar imagen en manifiestos con envsubst
-          command: |
+
+            # Verificar que el archivo 'deployment.yaml' está en el directorio correcto
+            if [ -f "deployment.yaml" ]; then
+              echo "Archivo deployment.yaml encontrado."
+            else
+              echo "Error: No se encontró el archivo deployment.yaml"
+              exit 1
+            fi
+
             # Verificar el contenido del archivo antes de usar envsubst
-            cat manifests/deployment.yaml
+            cat deployment.yaml
+
             # Usar envsubst para reemplazar las variables en el archivo deployment.yaml
-            envsubst < manifests/deployment.yaml > manifests/deployment_updated.yaml
+            envsubst < deployment.yaml > deployment_updated.yaml
+
             # Verificar que la imagen haya sido actualizada
-            cat manifests/deployment_updated.yaml
+            cat deployment_updated.yaml
+
             # Sobrescribir el archivo original con el actualizado
-            mv manifests/deployment_updated.yaml manifests/deployment.yaml
+            mv deployment_updated.yaml deployment.yaml
       - run:
           name: Commit y Push de cambios
           command: |
