@@ -85,7 +85,7 @@ jobs:
           command: |
             # Verificar la estructura completa del repositorio clonado
             echo "Estructura del repositorio clonado:"
-            ls -R
+            ls -R  # Muestra la estructura completa del repositorio
 
       - run:
           name: Verificar contenido del directorio de manifiestos
