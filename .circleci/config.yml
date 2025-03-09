@@ -85,7 +85,12 @@ jobs:
             # Verificar el contenido del directorio después de clonar
             ls -l manifests
             # Verificar que deployment.yaml existe en el directorio correcto
-            ls -l manifests/deployment.yaml || echo "No se encontró el archivo deployment.yaml"
+            if [ -f "manifests/deployment.yaml" ]; then
+              echo "Archivo deployment.yaml encontrado."
+            else
+              echo "Error: No se encontró el archivo deployment.yaml"
+              exit 1
+            fi
       - run:
           name: Actualizar imagen en manifiestos con envsubst
           command: |
