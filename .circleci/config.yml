@@ -91,8 +91,8 @@ jobs:
             # Verificar la ubicación actual
             echo "Directorio actual: $(pwd)"
             
-            # Cambiar al directorio 'manifests'
-            cd manifests/manifests || { echo "Error: No se pudo acceder al directorio 'manifests'"; exit 1; }
+            # Cambiar al directorio 'manifests' (ya no existe el subdirectorio 'manifests')
+            cd manifests || { echo "Error: No se pudo acceder al directorio 'manifests'"; exit 1; }
 
             # Verificar el contenido del directorio 'manifests'
             echo "Contenido de manifests:"
@@ -110,7 +110,7 @@ jobs:
           name: Actualizar imagen en manifiestos con envsubst
           command: |
             # Asegurarse de estar en el directorio correcto
-            cd manifests/manifests
+            cd manifests
             # Verificar contenido antes de usar envsubst
             cat deployment.yaml
 
@@ -126,7 +126,7 @@ jobs:
       - run:
           name: Commit y Push de cambios
           command: |
-            cd manifests/manifests
+            cd manifests
             git add .
             git commit -m "Actualizar imagen a $DOCKERHUB_USER/$IMAGE_NAME:$CIRCLE_SHA1"
             git push https://github.com/RAMON1743/app-practica-cicd-Ramon-Meza.git main
